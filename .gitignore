@@ -1,5 +1,4 @@
 /MybatisGenerator.zip
-/codehelper.generator.log
 # Created by .ignore support plugin (hsz.mobi)
 
 ### Example user template template
@@ -14,5 +13,7 @@
 /MybatisGenerator.ipr
 /MybatisGenerator.iws
 /.gradle/
+
+
 
 
