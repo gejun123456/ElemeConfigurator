@@ -41,12 +41,13 @@ public class Configurator extends AnAction {
         }
         Map<String, JTextField> fieldMap =
                 dialog.getFieldMap();
-        StringBuilder builder = new StringBuilder("");
+        StringBuilder builder = new StringBuilder("{");
         fieldMap.forEach((k,v)->{
             builder.append(ONE_CHAR).append(k).append(ONE_CHAR).append(":{\"ispassword\":0,\"version\":\"default\",\"value\":\"")
                     .append(v.getText()).append("\"},");
         });
         builder.deleteCharAt(builder.length()-1);
+        builder.append("}");
         Messages.showInfoMessage(e.getProject(),builder.toString(),"the text");
     }
 
