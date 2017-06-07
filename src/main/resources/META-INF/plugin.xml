@@ -1,0 +1,24 @@
+<idea-plugin version="2">
+    <id>com.bruce.intellijpluin.GenerateElemeConfigure</id>
+    <name>GenerateElemeConfigure</name>
+    <version>1.1</version>
+    <vendor email="gejun123456@gmail.com">GenerateElemeConfigure</vendor>
+
+    <description><![CDATA[
+      GenerateElemeConfigure by right click
+    ]]>
+    </description>
+    <change-notes>
+    </change-notes>
+
+    <actions>
+        <group id="GenerateElemeConfigureGroup">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="ConsoleEditorPopupMenu" anchor="first"/>
+            <action class="com.bruce.elemeConfigurator.Configurator" id="GenerateElemeConfigure"
+                    text="generateElemeConfig"
+                    description="generateElemeConfig"/>
+        </group>
+    </actions>
+    <idea-version since-build="141.0"/>
+</idea-plugin>
