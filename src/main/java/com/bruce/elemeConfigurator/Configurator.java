@@ -3,12 +3,28 @@ package com.bruce.elemeConfigurator;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -28,16 +44,45 @@ public class Configurator extends AnAction {
     }
     @Override
     public void actionPerformed(AnActionEvent e) {
-        String googleSite = "https://www.google.com/";
         CaretModel caretModel = e.getData(LangDataKeys.EDITOR).getCaretModel();
         Caret currentCaret =
                 caretModel.getCurrentCaret();
+        VirtualFile currentFile = DataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+        StringBuilder builder = generateDataFromFile(e, currentCaret, currentFile);
+        if (builder == null) return;
+
+        String copyData = builder.toString();
+
+        String path = currentFile.getPath();
+
+        copyDataAndShowStatusBar(path, copyData,e);
+
+    }
+
+    @Nullable
+    private StringBuilder generateDataFromFile(AnActionEvent e, Caret currentCaret, VirtualFile currentFile) {
         String selectedText = currentCaret.getSelectedText();
+        String extension = currentFile.getExtension();
+        if(extension.equals("properties")){
+            //do something with it.
+            return handleWithProperyFile(selectedText);
+        } else if (extension.equals("etpl")) {
+            return handleWithEtplFile(selectedText,e.getProject());
+        } else {
+            return null;
+        }
+
+    }
+
+    private StringBuilder handleWithEtplFile(String selectedText,Project project) {
         List<String> strings = extractConfigText(selectedText);
-        ExetractTextDialog dialog = new ExetractTextDialog(e.getProject(),strings);
+        if(strings.isEmpty()){
+            return null;
+        }
+        ExetractTextDialog dialog = new ExetractTextDialog(project,strings);
         boolean b = dialog.showAndGet();
         if(!b){
-            return;
+            return null;
         }
         Map<String, JTextField> fieldMap =
                 dialog.getFieldMap();
@@ -48,9 +93,57 @@ public class Configurator extends AnAction {
         });
         builder.deleteCharAt(builder.length()-1);
         builder.append("}");
-        Messages.showInfoMessage(e.getProject(),builder.toString(),"the text");
+        return builder;
     }
 
+    @Nullable
+    public static StringBuilder handleWithProperyFile(String selectedText) {
+        List<String> extractProperty = extractProperty(selectedText);
+        if(extractProperty.isEmpty()){
+            return null;
+        }
+        StringBuilder builder = new StringBuilder();
+        for (String s : extractProperty) {
+            builder.append(s).append("={{_ .").append(s.replaceAll("\\.","_")).append("}}\n");
+        }
+        return builder;
+    }
+
+    @NotNull
+    private static List<String> extractProperty(String selectedText) {
+        List<String> lists = Lists.newArrayList();
+        String[] split = selectedText.split("\n");
+        for (String s : split) {
+            String u = "";
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if(c!='='){
+                    u+=c;
+                }else {
+                    break;
+                }
+            }
+            lists.add(u);
+        }
+        return lists;
+    }
+
+    private void copyDataAndShowStatusBar(String path, String copyData,AnActionEvent e) {
+        StringSelection stringSelection = new StringSelection(copyData);
+        Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clpbrd.setContents(stringSelection, null);
+
+                StatusBar statusBar = WindowManager.getInstance()
+                .getStatusBar(DataKeys.PROJECT.getData(e.getDataContext()));
+        JBPopupFactory.getInstance()
+                .createHtmlTextBalloonBuilder("already copy "+copyData+" to clipboard", MessageType.INFO, null)
+                .setFadeoutTime(7500)
+                .createBalloon()
+                .show(RelativePoint.getCenterOf(statusBar.getComponent()),
+                        Balloon.Position.atRight);
+    }
+
+    @NotNull
     private List<String> extractConfigText(String selectedText) {
         Pattern pattern = Pattern.compile("\\{\\{_.*\\}\\}");
 

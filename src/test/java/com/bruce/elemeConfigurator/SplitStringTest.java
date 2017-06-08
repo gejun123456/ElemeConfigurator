@@ -36,4 +36,51 @@ public class SplitStringTest {
         }
 
     }
+
+    @Test
+    public void testExtractEtplFromProperty(){
+        String propertyString =  "scorpio.jdbc.acquireIncrement=10\n" +
+                "scorpio.jdbc.idleConnectionTestPeriod=50\n" +
+                "scorpio.jdbc.maxPoolSize=100\n" +
+                "scorpio.jdbc.minPoolSize=10\n" +
+                "scorpio.jdbc.maxStatements=0\n" +
+                "scorpio.jdbc.checkoutTimeout=3000";
+
+        List<String> lists = Lists.newArrayList();
+        String[] split = propertyString.split("\n");
+        for (String s : split) {
+            String u = "";
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if(c!='='){
+                    u+=c;
+                }else {
+                    break;
+                }
+            }
+            lists.add(u);
+        }
+        for (String list : lists) {
+            System.out.println(list);
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (String s : lists) {
+            builder.append(s).append("={{_ .").append(s.replaceAll("\\.","_")).append("}}\n");
+        }
+
+        System.out.println(builder.toString());
+    }
+
+    @Test
+    public void handleWithProerty(){
+        String propertyString =  "scorpio.jdbc.acquireIncrement=10\n" +
+                "scorpio.jdbc.idleConnectionTestPeriod=50\n" +
+                "scorpio.jdbc.maxPoolSize=100\n" +
+                "scorpio.jdbc.minPoolSize=10\n" +
+                "scorpio.jdbc.maxStatements=0\n" +
+                "scorpio.jdbc.checkoutTimeout=3000";
+        StringBuilder builder = Configurator.handleWithProperyFile(propertyString);
+        System.out.println(builder.toString());
+    }
 }
