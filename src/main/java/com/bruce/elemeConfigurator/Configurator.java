@@ -22,9 +22,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -37,7 +34,7 @@ import java.util.regex.Pattern;
  */
 public class Configurator extends AnAction {
 
-    public static final String ONE_CHAR = "\"";
+    public static final String QUOTE = "\"";
 
     public Configurator(){
         super(null,null, new ImageIcon(Configurator.class.getClassLoader().getResource("icon/stackoverflow.ico")));
@@ -68,10 +65,44 @@ public class Configurator extends AnAction {
             return handleWithProperyFile(selectedText);
         } else if (extension.equals("etpl")) {
             return handleWithEtplFile(selectedText,e.getProject());
-        } else {
+        } else if (extension.equals("xml")){
+            return handleWithXmlFile(selectedText,e.getProject());
+        } else{
             return null;
         }
 
+    }
+
+    private StringBuilder handleWithXmlFile(String selectedText, Project project) {
+        //todo need check this.
+        List<String> strings = extractXmlPropFromText(selectedText);
+        if(strings.isEmpty()){
+            return null;
+        }
+        ExetractTextDialog dialog = new ExetractTextDialog(project,strings);
+        boolean b = dialog.showAndGet();
+        if(!b){
+            return null;
+        }
+        Map<String, JTextField> fieldMap =
+                dialog.getFieldMap();
+        StringBuilder builder = new StringBuilder();
+        fieldMap.forEach((k,v)->{
+            builder.append(k).append("=").append(v.getText()).append("\n");
+        });
+        return builder;
+    }
+
+    private List<String> extractXmlPropFromText(String selectedText) {
+        Pattern pattern = Pattern.compile("\\$\\{.*?\\}");
+        Matcher matcher = pattern.matcher(selectedText);
+        List<String> extractStrings = Lists.newArrayList();
+        while(matcher.find()){
+            int start = matcher.start();
+            int end = matcher.end();
+            extractStrings.add(selectedText.substring(start+2,end-1));
+        }
+        return extractStrings;
     }
 
     private StringBuilder handleWithEtplFile(String selectedText,Project project) {
@@ -88,7 +119,7 @@ public class Configurator extends AnAction {
                 dialog.getFieldMap();
         StringBuilder builder = new StringBuilder("{");
         fieldMap.forEach((k,v)->{
-            builder.append(ONE_CHAR).append(k).append(ONE_CHAR).append(":{\"ispassword\":0,\"version\":\"default\",\"value\":\"")
+            builder.append(QUOTE).append(k).append(QUOTE).append(":{\"ispassword\":0,\"version\":\"default\",\"value\":\"")
                     .append(v.getText()).append("\"},");
         });
         builder.deleteCharAt(builder.length()-1);
