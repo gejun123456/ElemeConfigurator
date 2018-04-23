@@ -13,7 +13,7 @@
 
     <actions>
         <group id="GenerateElemeConfigureGroup">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
             <add-to-group group-id="ConsoleEditorPopupMenu" anchor="first"/>
             <action class="com.bruce.elemeConfigurator.Configurator" id="GenerateElemeConfigure"
                     text="generateElemeConfig"
